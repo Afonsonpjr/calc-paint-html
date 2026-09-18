@@ -1,0 +1,12 @@
+{
+  "name": "calc-paint-html-cloudflare",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "npm ci --prefix web && npm run build --prefix web",
+    "deploy": "npx --yes wrangler@4.38.0 deploy --config wrangler.jsonc"
+  }
+}
