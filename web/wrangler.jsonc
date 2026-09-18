@@ -1,10 +1,15 @@
 {
-  // Configuração para publicar o app da pasta web/ (Vite) como assets estáticos no Cloudflare Workers.
-  // "directory" aponta para a pasta de saída padrão do build do Vite (dist).
+  // Configuracao para publicar o app da pasta web/ (Vite) como assets estaticos no Cloudflare Workers,
+  // com um Worker de API para automacao com IA e traducao de pagina.
   "name": "calc-paint-html",
   "compatibility_date": "2026-09-18",
+  "main": "./functions/worker.js",
   "assets": {
     "directory": "./dist",
+    "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "ai": {
+    "binding": "AI"
   }
 }
