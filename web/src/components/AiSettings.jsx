@@ -47,12 +47,12 @@ export default function AiSettings({ onClose }) {
           </label>
           <label style={{ display: "block", margin: "6px 0" }}>
             <span className="field-label">API key (leave blank for local runtimes)</span>
-            <input type="password" value={cfg.apiKey} onChange={set("apiKey")} placeholder="stored in this browser only"
+            <input type="password" value={cfg.apiKey} onChange={set("apiKey")} placeholder="kept only for this browser tab"
               className="field-input" style={{ marginTop: 4 }} />
           </label>
           <p style={{ background: "var(--paper-shadow)", padding: "8px 10px", fontSize: 12.5, marginTop: 10 }}>
-            The key is stored <strong>in this browser</strong> (localStorage) — anyone with access to this browser
-            profile can read it, so use a key you can revoke. Leave everything blank and the AI features stay
+            The key is kept only for <strong>this browser tab</strong> (sessionStorage) and is cleared when the tab closes.
+            Use a key you can revoke. Leave everything blank and the AI features stay
             out of your way entirely. The endpoint must allow requests from a browser (CORS); local runtimes
             generally allow localhost.
           </p>
