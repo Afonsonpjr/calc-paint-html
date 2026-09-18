@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import "./styles/tokens.css";
 import "./styles/app.css";
+import { I18nProvider, useI18n } from "./i18n/index.js";
 import TakeoffCanvas from "./pages/TakeoffCanvas.jsx";
 import ProjectHome from "./components/ProjectHome.jsx";
 import { GoogleAuthProvider, useGoogleAuth } from "./lib/google/AuthContext.jsx";
@@ -47,8 +48,8 @@ function Centered({ title, body }) {
   return (
     <div style={centered}>
       {brand}
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
-      {body ? <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{body}</div> : null}
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{resolvedTitle}</div>
+      {body ? <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{resolvedBody}</div> : null}
     </div>
   );
 }
@@ -56,12 +57,10 @@ function Centered({ title, body }) {
 // Defaults are the deep-linked-project copy (ProjectGate renders it bare);
 // the project-home gate passes its own title/body, and `footer` slots an
 // extra element under the button (the home flavor's skip link).
-function SignInScreen({
-  ready, signIn,
-  title = "This project is stored in your team's Google Drive",
-  body = "Sign in with your team Google account to open it. Only accounts on the team domain can sign in.",
-  footer = null,
-}) {
+function SignInScreen({ ready, signIn, title, body, footer = null }) {
+  const { t } = useI18n();
+  const resolvedTitle = title || t("auth.projectTitle");
+  const resolvedBody = body || t("auth.projectBody");
   const [err, setErr] = useState("");
   return (
     <div style={centered}>
@@ -73,9 +72,9 @@ function SignInScreen({
         style={{ padding: "9px 16px", border: "1px solid var(--ink)", background: "var(--ink)",
           color: "var(--paper-bright)", cursor: ready ? "pointer" : "default", fontWeight: 600,
           fontSize: 13.5, opacity: ready ? 1 : 0.5 }}>
-        Sign in with Google
+        {t("auth.signInGoogle")}
       </button>
-      {err ? <div style={{ fontSize: 12.5, color: "var(--c-danger)", maxWidth: 460 }}>Sign-in failed: {err}</div> : null}
+      {err ? <div style={{ fontSize: 12.5, color: "var(--c-danger)", maxWidth: 460 }}>{t("auth.signInFailed", { error: err })}</div> : null}
       {footer}
     </div>
   );
@@ -85,6 +84,7 @@ function SignInScreen({
 // Drive-backed store before rendering the canvas. The Google/Drive modules are
 // dynamically imported so the anonymous bundle never pulls them in.
 function ProjectGate({ projectId }) {
+  const { t } = useI18n();
   const { user, ready, signIn } = useGoogleAuth();
   const [storeReady, setStoreReady] = useState(false);
   const [error, setError] = useState("");
@@ -144,8 +144,8 @@ function ProjectGate({ projectId }) {
   useEffect(() => () => { setActiveStore(); }, []);
 
   if (!user) return <SignInScreen ready={ready} signIn={signIn} />;
-  if (error) return <Centered title="Couldn't open this project" body={error} />;
-  if (!storeReady) return <Centered title="Opening project…" />;
+  if (error) return <Centered title={t("auth.couldntOpenProject")} body={error} />;
+  if (!storeReady) return <Centered title={t("auth.openingProject")} />;
   // key on projectId so switching projects (or sign-in) remounts a fresh canvas
   return <TakeoffCanvas key={projectId} />;
 }
@@ -157,16 +157,17 @@ function ProjectGate({ projectId }) {
 // — this route only exists for whoever explicitly asks to browse team
 // projects, so a build with no root configured just bounces back to `/`.
 function ProjectHomeGate() {
+  const { t } = useI18n();
   const { user, ready, signIn } = useGoogleAuth();
   if (!isGoogleConfigured() || !projectHomeFolderId()) return <Navigate to="/" replace />;
   if (!user) {
     return (
       <SignInScreen ready={ready} signIn={signIn}
-        title="Your team's projects live in Google Drive"
-        body="Sign in with your team Google account to browse and open them. Only accounts on the team domain can sign in."
+        title={t("auth.projectsTitle")}
+        body={t("auth.projectsBody")}
         footer={
           <Link to="/" style={{ fontSize: 12.5, color: "var(--ink-muted)" }}>
-            skip — use the local canvas
+            {t("auth.skipLocal")}
           </Link>
         } />
     );
@@ -192,13 +193,15 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <GoogleAuthProvider>
+    <I18nProvider>
+      <GoogleAuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/projects" element={<ProjectHomeGate />} />
           <Route path="*" element={<App />} />
         </Routes>
       </BrowserRouter>
-    </GoogleAuthProvider>
+      </GoogleAuthProvider>
+    </I18nProvider>
   </React.StrictMode>
 );

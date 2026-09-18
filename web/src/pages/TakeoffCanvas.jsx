@@ -62,6 +62,8 @@ import { AGENT_TOOL_DEFS, executeAgentTool, agentScaleGate } from "../lib/agentT
 import { runAgentLoop } from "../lib/agentLoop.js";
 import { aiConfig, isAiConfigured } from "../lib/ai.js";
 import AccountChip from "../components/AccountChip.jsx";
+import LanguageSwitcher from "../components/LanguageSwitcher.jsx";
+import { useI18n } from "../i18n/index.js";
 import { useGoogleAuth } from "../lib/google/AuthContext.jsx";
 import { projectHomeFolderId } from "../lib/projectHome.js";
 import { getTheme, toggleTheme, onThemeChange } from "../lib/theme.js";
@@ -147,6 +149,8 @@ export default function TakeoffCanvas() {
   // while signed out, or it'd be a second OAuth entry point (a /projects
   // sign-in wall) in the toolbar, breaking the pre-Drive local-first look.
   const { user: googleUser } = useGoogleAuth();
+  const { t } = useI18n();
+  const toolLabel = (item) => t(`tools.${item.id}`, {}, item.label);
   // Client-side exit back to the project home (`/`) — main.jsx's gate cleanup
   // restores the local store on the way out, so this navigation is safe.
   const navigate = useNavigate();
@@ -4384,100 +4388,101 @@ export default function TakeoffCanvas() {
             — fixed presence for the whole session (cloudMode is set before the
             canvas mounts), so neither ever shifts deck-1 mid-work */}
         {cloudMode && (
-          <button type="button" onClick={closeProject} title="Close this project and return to the local canvas"
+          <button type="button" onClick={closeProject} title={t("header.closeProjectTitle")}
             style={{ padding: "6px 10px", border: "1px solid var(--ink-faint)", background: "transparent", color: "var(--ink-muted)", cursor: "pointer", fontSize: 12.5, lineHeight: 1 }}>
-            Close project
+            {t("header.closeProject")}
           </button>
         )}
         {cloudMode && browseProjects && (
-          <button type="button" onClick={browseProjects} title="Back to your team's projects"
+          <button type="button" onClick={browseProjects} title={t("header.projectsTitle")}
             style={{ padding: "6px 10px", border: "1px solid var(--ink-faint)", background: "transparent", color: "var(--ink-muted)", cursor: "pointer", fontSize: 12.5, lineHeight: 1 }}>
-            Projects
+            {t("header.projects")}
           </button>
         )}
         <input name="sheet-file" ref={fileInputRef} type="file" accept=".pdf,application/pdf,image/*,.zip,application/zip,application/x-zip-compressed" multiple style={{ display: "none" }}
           onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }} />
-        <button type="button" onClick={() => fileInputRef.current?.click()} title="Open plans — PDF, image, or a .zip plan set (or just drag them onto the canvas)"
+        <button type="button" onClick={() => fileInputRef.current?.click()} title={t("header.openTitle")}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: "1px solid var(--ink)", background: "var(--ink)", color: "var(--paper-bright)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
-          <Icon name="plus" size={14} />Open</button>
+          <Icon name="plus" size={14} />{t("header.open")}</button>
         <button type="button" onClick={() => setView("gallery")}
           title={`Plan set — the visual gallery; open one or several sheets (G)${sheetGroup.length ? ` · ${sheetGroup.length} side-by-side now` : ""}`}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: `1px solid ${sheetGroup.length ? "var(--cobalt)" : "var(--ink-faint)"}`, background: sheetGroup.length ? "var(--cobalt)" : "transparent", color: sheetGroup.length ? "var(--paper-bright)" : "var(--ink)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
-          <Icon name="sheets" size={15} />Sheets
+          <Icon name="sheets" size={15} />{t("header.sheets")}
         </button>
         {sheets.length > 0 && (
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={!!sheetGroup.length || page <= 1} title="Previous sheet"
+            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={!!sheetGroup.length || page <= 1} title={t("header.previousSheet")}
               style={{ padding: "5px 8px", border: "1px solid var(--ink-faint)", background: "transparent", color: "var(--ink)", cursor: "pointer", opacity: (!!sheetGroup.length || page <= 1) ? 0.4 : 1 }}><Icon name="chevronLeft" size={12} /></button>
             <ToolMenu
-              title="Sheet — the sheets in this set, files, grouping, and the gallery"
+              title={t("header.sheetMenuTitle")}
               onOpenChange={onMenuDepth}
               face={<span style={{ display: "inline-block", maxWidth: 300, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sheetChipLabel}</span>}
               faceStyle={{ fontFamily: "var(--f-mono)", fontSize: 12, fontWeight: 400, padding: "6px 8px" }}
               menuStyle={{ minWidth: 260, maxHeight: "min(480px, 60vh)", overflowY: "auto" }}
               items={sheetMenuItems}
             />
-            <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={!!sheetGroup.length || page >= pageCount} title="Next sheet"
+            <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={!!sheetGroup.length || page >= pageCount} title={t("header.nextSheet")}
               style={{ padding: "5px 8px", border: "1px solid var(--ink-faint)", background: "transparent", color: "var(--ink)", cursor: "pointer", opacity: (!!sheetGroup.length || page >= pageCount) ? 0.4 : 1 }}><Icon name="chevronRight" size={12} /></button>
           </span>
         )}
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: "var(--ink-muted)", minWidth: 44, fontFamily: "var(--f-mono)" }}>{saveState === "saving" ? "saving…" : saveState === "saved" ? "saved ✓" : ""}</span>
-        <button onClick={toggleTheme} title="App theme — light / dark chrome (sheets unaffected; use ☾ on the canvas to invert the print)"
-          aria-label="App theme — light / dark chrome" aria-pressed={theme === "dark"}
+        <LanguageSwitcher />
+        <span style={{ fontSize: 11, color: "var(--ink-muted)", minWidth: 44, fontFamily: "var(--f-mono)" }}>{saveState === "saving" ? t("common.saving") : saveState === "saved" ? t("common.saved") : ""}</span>
+        <button onClick={toggleTheme} title={t("header.themeTitle")}
+          aria-label={t("header.themeTitle")} aria-pressed={theme === "dark"}
           style={{ display: "inline-flex", alignItems: "center", padding: "6px 9px", border: "1px solid var(--ink-faint)", background: "transparent", color: "var(--ink)", cursor: "pointer", fontSize: 14, lineHeight: 1 }}>
           {theme === "dark" ? "◐" : "◑"}
         </button>
         <button onClick={() => { setScheduleAnchor(null); setTool((t) => (t === "schedule" ? "select" : "schedule")); }}
-          title="Import from schedule — arm, then drag a box around the finish/material schedule to create conditions (two clicks: corner, corner)"
+          title={t("header.scheduleTitle")}
           style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: `1px solid ${tool === "schedule" ? "var(--cobalt)" : "var(--ink-faint)"}`, background: tool === "schedule" ? "var(--cobalt)" : "transparent", color: tool === "schedule" ? "var(--paper-bright)" : "var(--ink)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
-          <Icon name="rectTool" size={15} />Schedule
+          <Icon name="rectTool" size={15} />{t("header.schedule")}
         </button>
-        <button onClick={() => setShowReport(true)} disabled={!conditions.length} title="Open the takeoff report — per-condition breakdown with waste, plus CSV / JSON export."
-          style={{ padding: "8px 14px", border: "none", background: conditions.length ? "var(--ink)" : "var(--text-faint)", color: "var(--paper-bright)", cursor: conditions.length ? "pointer" : "default", fontWeight: 700, fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>Report</button>
+        <button onClick={() => setShowReport(true)} disabled={!conditions.length} title={t("header.reportTitle")}
+          style={{ padding: "8px 14px", border: "none", background: conditions.length ? "var(--ink)" : "var(--text-faint)", color: "var(--paper-bright)", cursor: conditions.length ? "pointer" : "default", fontWeight: 700, fontFamily: "var(--f-mono)", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }}>{t("header.report")}</button>
         {/* Deliberately subtle, not a button: local-first app, cloud mode is an
             opt-in extra. Only when ALREADY signed in (never a sign-in entry
             point in the toolbar — that lives solely on the landing link), no
             cloud project is open, and the build names a Projects root. */}
         {!cloudMode && googleUser && isGoogleConfigured() && projectHomeFolderId() && (
           <Link to="/projects" style={{ fontSize: 11.5, color: "var(--ink-muted)", whiteSpace: "nowrap" }}>
-            browse team projects
+            {t("header.browseProjects")}
           </Link>
         )}
-        <AccountChip note={cloudMode ? "Synced to Google Drive" : "Local workspace"} onOpenChange={onMenuDepth} />
+        <AccountChip note={cloudMode ? t("common.syncedDrive") : t("common.localWorkspace")} onOpenChange={onMenuDepth} />
       </div>
 
       {/* deck 2 — the work bar: drafting-style captions above each cluster */}
       <div style={{ display: "flex", gap: 7, alignItems: "center", padding: "20px 14px 8px", borderBottom: "1px solid var(--ink-faint)", background: "var(--paper-bright)", whiteSpace: "nowrap" }}>
-        {cluster("Mode",
+        {cluster(t("toolbar.mode"),
           <span style={{ display: "inline-flex", border: "1px solid var(--ink-faint)" }}>
             {segBtn("pan", "pan", "Pan (P) — or hold right-click / Space mid-measure")}
             {segBtn("select", "select", "Select (V) — pick a takeoff, drag points", true)}
           </span>
         )}
         {vRule}
-        {cluster("Draw", <>
+        {cluster(t("toolbar.draw"), <>
           <ToolMenu
-            title="Measure — the face shows the armed tool"
+            title={t("toolbar.measureTitle")}
             active={measureActive}
             onOpenChange={onMenuDepth}
-            face={<><Icon name={faceTool.icon} size={15} /><span style={{ opacity: measureActive ? 1 : 0.6 }}>{faceTool.label}</span></>}
-            items={MEASURE_TOOLS.map((t) => ({ id: t.id, icon: t.icon, label: t.label, shortcut: t.shortcut, active: tool === t.id, onSelect: () => setTool(t.id) }))}
+            face={<><Icon name={faceTool.icon} size={15} /><span style={{ opacity: measureActive ? 1 : 0.6 }}>{toolLabel(faceTool)}</span></>}
+            items={MEASURE_TOOLS.map((item) => ({ id: item.id, icon: item.icon, label: toolLabel(item), shortcut: item.shortcut, active: tool === item.id, onSelect: () => setTool(item.id) }))}
           />
           <ToolMenu
-            title="Cut Out — subtract voids/columns (counts negative)"
+            title={t("toolbar.cutOutTitle")}
             active={tool === "deduct"} accent="danger"
             onOpenChange={onMenuDepth}
-            face={<><Icon name="deduct" size={15} /><span>Cut Out</span></>}
-            items={CUT_TOOLS.map((t) => ({ id: t.id, icon: t.icon, label: t.label, shortcut: t.shortcut, active: tool === t.id, tint: "var(--c-danger)", onSelect: () => setTool(t.id) }))}
+            face={<><Icon name="deduct" size={15} /><span>{t("toolbar.cutOut")}</span></>}
+            items={CUT_TOOLS.map((item) => ({ id: item.id, icon: item.icon, label: toolLabel(item), shortcut: item.shortcut, active: tool === item.id, tint: "var(--c-danger)", onSelect: () => setTool(item.id) }))}
           />
           <span style={{ position: "relative", display: "inline-flex" }}>
             <ToolMenu
-              title="Markup — annotations, not measurements"
+              title={t("toolbar.markupTitle")}
               active={MARKUP_IDS.includes(tool)}
               onOpenChange={onMenuDepth}
-              face={<><Icon name="markup" size={15} /><span>Markup</span></>}
-              items={MARKUP_TOOLS.map((t) => ({ id: t.id, icon: t.icon, label: t.label, shortcut: t.shortcut, active: tool === t.id, onSelect: () => { setTool(t.id); setMarkupDraft(null); } }))}
+              face={<><Icon name="markup" size={15} /><span>{t("toolbar.markup")}</span></>}
+              items={MARKUP_TOOLS.map((item) => ({ id: item.id, icon: item.icon, label: toolLabel(item), shortcut: item.shortcut, active: tool === item.id, onSelect: () => { setTool(item.id); setMarkupDraft(null); } }))}
             />
             {/* highlighter style popover — visible while the tool is armed (hatch-picker chrome) */}
             {tool === "highlighter" && (
@@ -4507,43 +4512,43 @@ export default function TakeoffCanvas() {
             )}
           </span>
           <ToolMenu
-            title="Edit takeoffs"
+            title={t("toolbar.editTitle")}
             onOpenChange={onMenuDepth}
-            face={<span>Edit</span>}
+            face={<span>{t("toolbar.edit")}</span>}
             items={[
-              { id: "copy", icon: "copy", label: "Copy", shortcut: "⌘C", disabled: !selectedId, onSelect: copySelected },
-              { id: "paste", icon: "paste", label: "Paste", shortcut: "⌘V", disabled: !clipRef.current.length, onSelect: () => pasteClipboard() },
-              { id: "dup", icon: "duplicate", label: "Duplicate", shortcut: "⌘D", disabled: !selectedId, onSelect: duplicateSelected },
+              { id: "copy", icon: "copy", label: t("edit.copy"), shortcut: "⌘C", disabled: !selectedId, onSelect: copySelected },
+              { id: "paste", icon: "paste", label: t("edit.paste"), shortcut: "⌘V", disabled: !clipRef.current.length, onSelect: () => pasteClipboard() },
+              { id: "dup", icon: "duplicate", label: t("edit.duplicate"), shortcut: "⌘D", disabled: !selectedId, onSelect: duplicateSelected },
               "divider",
-              { id: "flipH", label: "Flip Horizontal", disabled: !selectedId, onSelect: () => flipSelected("h") },
-              { id: "flipV", label: "Flip Vertical", disabled: !selectedId, onSelect: () => flipSelected("v") },
+              { id: "flipH", label: t("edit.flipH"), disabled: !selectedId, onSelect: () => flipSelected("h") },
+              { id: "flipV", label: t("edit.flipV"), disabled: !selectedId, onSelect: () => flipSelected("v") },
               "divider",
-              { id: "finish", icon: "check", label: `Finish shape${poly.length ? ` (${poly.length} pts)` : ""}`, shortcut: "↵", disabled: !finishOk, onSelect: finishShape },
-              { id: "undopt", icon: "undo", label: "Undo last point", shortcut: "⌘Z", disabled: !poly.length, onSelect: () => setPoly((q) => q.slice(0, -1)) },
-              { id: "undoshape", icon: "undo", label: "Undo last shape", disabled: !visibleShapes.length, onSelect: undoLast },
-              { id: "redo", label: "Redo", shortcut: "⇧⌘Z", onSelect: redoShapeCommand },
+              { id: "finish", icon: "check", label: `${t("edit.finishShape")}${poly.length ? ` (${poly.length} pts)` : ""}`, shortcut: "↵", disabled: !finishOk, onSelect: finishShape },
+              { id: "undopt", icon: "undo", label: t("edit.undoPoint"), shortcut: "⌘Z", disabled: !poly.length, onSelect: () => setPoly((q) => q.slice(0, -1)) },
+              { id: "undoshape", icon: "undo", label: t("edit.undoShape"), disabled: !visibleShapes.length, onSelect: undoLast },
+              { id: "redo", label: t("edit.redo"), shortcut: "⇧⌘Z", onSelect: redoShapeCommand },
               "divider",
-              { id: "del", icon: "close", label: "Delete selected", shortcut: "⌫", disabled: !selectedId, tint: "var(--c-danger)", onSelect: deleteSelected },
+              { id: "del", icon: "close", label: t("edit.deleteSelected"), shortcut: "⌫", disabled: !selectedId, tint: "var(--c-danger)", onSelect: deleteSelected },
             ]}
           />
         </>)}
         {vRule}
-        {cluster("Aids", <>
+        {cluster(t("toolbar.aids"), <>
           <button onClick={() => setTool((t) => (t === "zone" ? "select" : "zone"))}
             title="Zone check — trace a region (an apartment, a wing) to read every condition's quantities inside it, materials included. Nothing is saved; the outline clears when you leave the tool."
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: `1px solid ${tool === "zone" ? "var(--cobalt)" : "var(--ink-faint)"}`, background: tool === "zone" ? "var(--cobalt)" : "transparent", color: tool === "zone" ? "var(--paper-bright)" : "var(--ink)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
-            <Icon name="zone" size={15} />Zone
+            <Icon name="zone" size={15} />{t("toolbar.zone")}
           </button>
-          <button onClick={() => setSnapOn((v) => !v)} title="Snap to plan lines/corners (beta)"
+          <button onClick={() => setSnapOn((v) => !v)} title={t("toolbar.snapTitle")}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: `1px solid ${snapOn ? "var(--c-positive)" : "var(--ink-faint)"}`, background: snapOn ? "var(--c-positive)" : "transparent", color: snapOn ? "var(--paper-bright)" : "var(--ink)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
-            <Icon name="snap" size={15} />Snap
+            <Icon name="snap" size={15} />{t("toolbar.snap")}
           </button>
           <button onClick={() => setAngleOn((v) => !v)} title="45°/90° angle guides — the next segment locks to the 45° family as you draw (hold ⇧ to force the lock at any angle)"
             style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 10px", border: `1px solid ${angleOn ? "var(--cobalt)" : "var(--ink-faint)"}`, background: angleOn ? "var(--cobalt)" : "transparent", color: angleOn ? "var(--paper-bright)" : "var(--ink)", cursor: "pointer", fontWeight: 600, fontSize: 12.5, lineHeight: 1 }}>
             <Icon name="angle" size={15} />45°
           </button>
           <ToolMenu
-            title="Render & fill settings — Hi-Res and One-Click fill sensitivity"
+            title={t("toolbar.renderTitle")}
             onOpenChange={onMenuDepth}
             face={<Icon name="sliders" size={15} />}
             menuStyle={{ minWidth: 252 }}
@@ -4574,7 +4579,7 @@ export default function TakeoffCanvas() {
           </select>
         )}
         <div style={{ flex: 1 }} />
-        {cluster(`Scale — ${labelFor(focusPanel)}`,
+        {cluster(t("toolbar.scale", { sheet: labelFor(focusPanel) }),
           <>
             <button onClick={() => setUnits((u) => (u === "metric" ? "imperial" : "metric"))}
               title={units === "metric" ? "Metric display (m² / m) — click for imperial. Calibrate in meters; 1:50-style scales in the list. Display only — stored takeoffs never change." : "Imperial display (SF / LF) — click for metric (m² / m, calibrate in meters, 1:50-style scales). Display only — stored takeoffs never change."}
@@ -4591,7 +4596,7 @@ export default function TakeoffCanvas() {
             />
           </>
         )}
-        {cluster("Action",
+        {cluster(t("toolbar.action"),
           <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 6, minWidth: 150 }}>
             {markupDraft && (tool === "cloud" || tool === "callout" || tool === "highlight") && <span style={{ fontSize: 11, color: "var(--cobalt)" }}>click the {tool === "callout" ? "label spot" : "opposite corner"}…</span>}
             {finishOk && (
@@ -4624,7 +4629,7 @@ export default function TakeoffCanvas() {
           style={{ padding: "5px 14px", borderBottom: "1px solid var(--ink-faint)", background: "var(--paper-bright)" }}>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
             <span title="Quick-access conditions — drag a condition here (or use a row's pushpin) to pin it, up to 9. Press 1–9 to activate by this order; click a chip to activate; double-click to open the panel."
-              style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-muted)" }}>Conditions</span>
+              style={{ fontFamily: "var(--f-mono)", fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.14em", color: "var(--ink-muted)" }}>{t("toolbar.conditions")}</span>
             {paletteConds.length === 0 ? (
               <span style={{ fontSize: 11.5, color: "var(--ink-muted)", fontStyle: "italic", padding: "3px 8px", border: "1px dashed var(--ink-faint)" }}>drag conditions here (or pin a row) for 1-9 one-click access</span>
             ) : paletteConds.map((c) => {
@@ -4656,7 +4661,7 @@ export default function TakeoffCanvas() {
             )}
             {/* add a condition without opening the (now-collapsed) sidebar */}
             <button type="button" onClick={addCondition} title="Add a new condition"
-              style={{ padding: "3px 9px", borderRadius: 0, border: "1px dashed var(--ink-faint)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--ink-muted)" }}>+ condition</button>
+              style={{ padding: "3px 9px", borderRadius: 0, border: "1px dashed var(--ink-faint)", background: "transparent", cursor: "pointer", fontSize: 12, color: "var(--ink-muted)" }}>{t("toolbar.addCondition")}</button>
           </div>
           {/* the active condition's appearance editor, restored to the top bar —
               same component the docked panel row renders (one source of truth) */}
