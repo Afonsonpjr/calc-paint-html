@@ -8,10 +8,10 @@
 // endpoint; unconfigured builds make zero AI network calls. No telemetry.
 // The code is open so anyone can audit exactly this.
 //
-// Config lives per-browser (localStorage) with build-time VITE_* fallbacks for
-// self-hosted team deploys. WARNING for deployers: Vite inlines VITE_AI_KEY
-// into the shipped JS bundle — anyone who can load the page can read it.
-// Never set it on a public deploy; it exists for private/team builds only.
+// Non-secret config lives per-browser in localStorage. API keys are kept only
+// for the current tab in sessionStorage so closing the tab clears them.
+// Build-time VITE_AI_KEY is intentionally not supported: Vite would inline it
+// into public JavaScript and expose it to anyone who can load the app.
 
 const KEYS = {
   endpoint: "opentakeoff_ai_endpoint",
@@ -24,10 +24,11 @@ const env = (name) => (import.meta.env && import.meta.env[name]) || "";
 
 function readKey(k, envName) {
   try {
-    const v = localStorage.getItem(KEYS[k]);
+    const storage = k === "apiKey" ? sessionStorage : localStorage;
+    const v = storage.getItem(KEYS[k]);
     if (v) return v;
   } catch { /* private mode */ }
-  return env(envName);
+  return k === "apiKey" ? "" : env(envName);
 }
 
 /** Current config. provider: "openai" (OpenAI-style — the default; local
@@ -35,7 +36,7 @@ function readKey(k, envName) {
 export function aiConfig() {
   return {
     endpoint: readKey("endpoint", "VITE_AI_ENDPOINT"),
-    apiKey: readKey("apiKey", "VITE_AI_KEY"),
+    apiKey: readKey("apiKey"),
     model: readKey("model", "VITE_AI_MODEL"),
     provider: readKey("provider", "VITE_AI_PROVIDER") || "openai",
   };
@@ -49,10 +50,14 @@ export function isAiConfigured() {
 
 export function saveAiConfig({ endpoint, apiKey, model, provider }) {
   try {
-    for (const [k, v] of [["endpoint", endpoint], ["apiKey", apiKey], ["model", model], ["provider", provider]]) {
+    for (const [k, v] of [["endpoint", endpoint], ["model", model], ["provider", provider]]) {
       if (v) localStorage.setItem(KEYS[k], v);
       else localStorage.removeItem(KEYS[k]);
     }
+    if (apiKey) sessionStorage.setItem(KEYS.apiKey, apiKey);
+    else sessionStorage.removeItem(KEYS.apiKey);
+    // Migrate away from older builds that persisted the secret.
+    localStorage.removeItem(KEYS.apiKey);
   } catch { /* private mode */ }
 }
 
