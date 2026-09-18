@@ -4,12 +4,31 @@ This app is configured as a React SPA plus a Worker API.
 
 ## Build settings
 
-- Root directory: `web`
+The repository supports both Cloudflare root-directory layouts.
+
+### Recommended for the existing `calc-paint-html` service
+
+Keep the Cloudflare **Root directory empty / repository root** and use:
+
+- Node.js: `24`
+- Build command: `npm run build`
+- Deploy command: `npm run deploy`
+
+The root `package.json` delegates the Vite build to `web/`, and the root `wrangler.jsonc` publishes `web/dist/`.
+
+### Alternative
+
+If Cloudflare is explicitly configured with **Root directory = `web`**:
+
 - Node.js: `24`
 - Build command: `npm ci && npm run build`
-- Deploy command: `npx wrangler deploy`
+- Deploy command: `npx wrangler@4.38.0 deploy`
 
-`wrangler.jsonc` serves `dist/` as static assets, falls back to `index.html` for React Router, and invokes the Worker first only for `/ai/*`.
+The `web/wrangler.jsonc` publishes `dist/`.
+
+Both configurations serve the React app as static assets, fall back to `index.html` for React Router, and invoke the Worker first only for `/ai/*`.
+
+Do not mix the two layouts (for example, Root directory `web` with the root-level deploy command), because that can deploy the Worker without the expected Vite output and result in an empty/blank application shell.
 
 ## Required Worker secrets / variables
 
