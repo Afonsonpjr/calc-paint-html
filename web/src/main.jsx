@@ -48,8 +48,8 @@ function Centered({ title, body }) {
   return (
     <div style={centered}>
       {brand}
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{resolvedTitle}</div>
-      {body ? <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{resolvedBody}</div> : null}
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
+      {body ? <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{body}</div> : null}
     </div>
   );
 }
@@ -65,8 +65,8 @@ function SignInScreen({ ready, signIn, title, body, footer = null }) {
   return (
     <div style={centered}>
       {brand}
-      <div style={{ fontSize: 15, fontWeight: 600 }}>{title}</div>
-      <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{body}</div>
+      <div style={{ fontSize: 15, fontWeight: 600 }}>{resolvedTitle}</div>
+      <div style={{ fontSize: 13, color: "var(--ink-muted)", maxWidth: 460 }}>{resolvedBody}</div>
       <button type="button" disabled={!ready}
         onClick={() => { setErr(""); signIn().catch((e) => setErr(String(e?.message || e))); }}
         style={{ padding: "9px 16px", border: "1px solid var(--ink)", background: "var(--ink)",
